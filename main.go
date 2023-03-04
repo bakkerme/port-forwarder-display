@@ -3,52 +3,30 @@ package main
 import (
 	_ "embed"
 	"fmt"
-	"log"
-	"os"
-	"strings"
 
-	"github.com/diamondburned/gotk4/pkg/gdk/v4"
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
-//go:embed style.css
-var styleCSS string
-
 func main() {
-	app := gtk.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", gio.ApplicationFlagsNone)
-	app.ConnectActivate(func() { activate(app) })
+	app := app.New()
 
-	if code := app.Run(os.Args); code > 0 {
-		os.Exit(code)
-	}
-}
-
-func activate(app *gtk.Application) {
-	// Load the CSS and apply it globally.
-	gtk.StyleContextAddProviderForDisplay(
-		gdk.DisplayGetDefault(), loadCSS(styleCSS),
-		gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-	)
-
-	window := gtk.NewApplicationWindow(app)
-	window.SetTitle("Port Forwarder")
-	window.SetDefaultSize(400, 300)
+	window := app.NewWindow("Port Forwarder")
+	window.Resize(fyne.NewSize(400, 300))
 
 	// Create a new text view
-	tv := gtk.NewTextView()
+	tv := widget.NewMultiLineEntry()
 
 	txt := createText()
 
-	// Set the text buffer of the text view
-	buf := tv.Buffer()
-	buf.SetText(txt)
+	// Set the text of the text view
+	tv.SetText(txt)
 
-	tv.SetBuffer(buf)
+	window.SetContent(container.NewVScroll(tv))
 
-	window.SetChild(tv)
-
-	window.Show()
+	window.ShowAndRun()
 }
 
 func createText() string {
@@ -64,16 +42,4 @@ func createText() string {
 		openPorts,
 		sshUsers,
 	)
-}
-
-func loadCSS(content string) *gtk.CSSProvider {
-	prov := gtk.NewCSSProvider()
-	prov.ConnectParsingError(func(sec *gtk.CSSSection, err error) {
-		// Optional line parsing routine.
-		loc := sec.StartLocation()
-		lines := strings.Split(content, "\n")
-		log.Printf("CSS error (%v) at line: %q", err, lines[loc.Lines()])
-	})
-	prov.LoadFromData(content)
-	return prov
 }
